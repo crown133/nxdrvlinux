@@ -16,6 +16,7 @@ if(LIBRARY_HEADER OR LIBRARY_INC_LIB)
 else(LIBRARY_HEADER OR LIBRARY_INC_LIB)
     include(FindPkgConfig)
     pkg_check_modules(LIBRARY_REQ REQUIRED cifx)
+    
 endif(LIBRARY_HEADER OR LIBRARY_INC_LIB)
 
 add_executable( cifx_api ${src_dir}/cifxlinuxsample.c)

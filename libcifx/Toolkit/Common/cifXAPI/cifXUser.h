@@ -528,7 +528,7 @@ int32_t APIENTRY xSysdeviceBootstart         ( CIFXHANDLE  hSysdevice, uint32_t 
 int32_t APIENTRY xSysdeviceExtendedMemory    ( CIFXHANDLE  hSysdevice, uint32_t ulCmd, CIFX_EXTENDED_MEMORY_INFORMATION* ptExtMemData);
 
 /* Channel depending functions */
-int32_t APIENTRY xChannelOpen                ( CIFXHANDLE  hDriver,  char* szBoard, uint32_t ulChannel, CIFXHANDLE* phChannel);
+int32_t APIENTRY xChannelOpen                ( CIFXHANDLE  hDriver,  const char* szBoard, uint32_t ulChannel, CIFXHANDLE* phChannel);
 int32_t APIENTRY xChannelClose               ( CIFXHANDLE  hChannel);
 int32_t APIENTRY xChannelFindFirstFile       ( CIFXHANDLE  hChannel, CIFX_DIRECTORYENTRY* ptDirectoryInfo, PFN_RECV_PKT_CALLBACK pfnRecvPktCallback, void* pvUser);
 int32_t APIENTRY xChannelFindNextFile        ( CIFXHANDLE  hChannel, CIFX_DIRECTORYENTRY* ptDirectoryInfo, PFN_RECV_PKT_CALLBACK pfnRecvPktCallback, void* pvUser);

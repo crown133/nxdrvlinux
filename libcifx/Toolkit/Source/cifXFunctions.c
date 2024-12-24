@@ -1009,7 +1009,7 @@ int32_t APIENTRY xSysdeviceExtendedMemory(CIFXHANDLE hSysdevice, uint32_t ulCmd,
 *                     specific operations)
 *   \return CIFX_NO_ERROR on success                                         */
 /*****************************************************************************/
-int32_t APIENTRY xChannelOpen(CIFXHANDLE hDriver, char* szBoard, uint32_t ulChannel, CIFXHANDLE* phChannel)
+int32_t APIENTRY xChannelOpen(CIFXHANDLE hDriver, const char* szBoard, uint32_t ulChannel, CIFXHANDLE* phChannel)
 {
   int32_t  lRet = CIFX_INVALID_BOARD;
   uint32_t ulIdx;

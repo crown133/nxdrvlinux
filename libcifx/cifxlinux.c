@@ -1096,7 +1096,7 @@ int32_t cifXDriverInit(const struct CIFX_LINUX_INIT* init_params)
       /* Set driver base directory */
       if(NULL == init_params->base_dir)
       {
-          g_szDriverBaseDir = strdup("/opt/cifx");
+        g_szDriverBaseDir = strdup("/opt/cifx");
       } else
       {
         g_szDriverBaseDir = strdup(init_params->base_dir);

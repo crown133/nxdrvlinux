@@ -119,6 +119,7 @@ file(GLOB INSTALL_HEADERS
      ${src_dir}/cifxlinux.h
      ${tk_dir}/Source/cifXEndianess.h
      ${tk_dir}/Common/cifXAPI/*.h
+     ${tk_dir}/Common/ECM_API/*.h
      ${tk_dir}/Common/HilscherDefinitions/*.h
      $<$<BOOL:${VIRTETH}>:${src_dir}/netx_tap/netx_tap.h>
 )
