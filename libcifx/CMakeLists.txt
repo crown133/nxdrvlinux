@@ -62,11 +62,18 @@ if(VIRTETH)
     if(NOT LIBDNL_INCLUDE_DIRS OR NOT LIBDNL_LIBRARY_DIRS OR NOT LIBDNL_LIBRARIES)
         pkg_check_modules(LIBDNL libnl-3.0)
         set(REQUIRED_PACKAGES "${REQUIRED_PACKAGES} libnl-3.0")
+        message(STATUS "LIBDNL_LIBRARIES: ${LIBDNL_LIBRARIES}")
+        message(STATUS "LIBDNL_LIBRARY_DIRS: ${LIBDNL_LIBRARY_DIRS}")
+
     endif(NOT LIBDNL_INCLUDE_DIRS OR NOT LIBDNL_LIBRARY_DIRS OR NOT LIBDNL_LIBRARIES)
 
     if(NOT LIBDNL_CLI_INCLUDE_DIRS OR NOT LIBDNL_CLI_LIBRARY_DIRS OR NOT LIBDNL_CLI_LIBRARIES)
-        pkg_check_modules(LIBDNL-CLI libnl-cli-3.0)
+        pkg_check_modules(LIBDNL_CLI libnl-cli-3.0)
         set(REQUIRED_PACKAGES "${REQUIRED_PACKAGES} libnl-cli-3.0")
+        message(STATUS "LIBDNL_CLI_LIBRARIES: ${LIBDNL_CLI_LIBRARIES}")
+        message(STATUS "LIBDNL_CLI_LIBRARY_DIRS: ${LIBDNL_CLI_LIBRARY_DIRS}")
+        message(STATUS "LIBDNL_CLI_INCLUDE_DIRS: ${LIBDNL_CLI_INCLUDE_DIRS}")
+
     endif(NOT LIBDNL_CLI_INCLUDE_DIRS OR NOT LIBDNL_CLI_LIBRARY_DIRS OR NOT LIBDNL_CLI_LIBRARIES)
 endif(VIRTETH)
 
@@ -94,8 +101,14 @@ target_link_libraries( cifx
         $<$<NOT:$<BOOL:${DISABLE_PCI}>>:pciaccess>
         $<$<OR:$<BOOL:${PLUGIN}>,$<BOOL:${SPM_PLUGIN}>>:dl>
         $<$<BOOL:${VIRTETH}>:${LIBDNL_LIBRARIES}>
-        $<$<BOOL:${VIRTETH}>:${LIBDNL_CLI_LIBRARIES}>
+        # $<$<BOOL:${VIRTETH}>:${LIBDNL_CLI_LIBRARIES}>
 )
+
+if(VIRTETH)
+    foreach(lib ${LIBDNL_CLI_LIBRARIES})
+        target_link_libraries(cifx PRIVATE ${lib})
+    endforeach()
+endif()
 
 # link and create shared & static library
 target_sources( cifx
