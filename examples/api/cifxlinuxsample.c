@@ -18,6 +18,7 @@
 
 #include "Hil_Packet.h"
 #include "Hil_SystemCmd.h"
+#include <EcmIF_Public.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -541,44 +542,19 @@ int32_t ChannelDemo()
 
         printf("Mailbox Size     : %lu\r\n",(long unsigned int)tChannelInfo.ulMailboxSize);
       }
-      uint32_t    ulSendPktCount = 0;
-      uint32_t    ulRecvPktCount = 0;
-      CIFX_PACKET tSendPkt       = {{0}};
-      CIFX_PACKET tRecvPkt       = {{0}};
 
-      printf("\nStart put/get packet Demo!\n");
+      uint32_t ulState  = 0;
 
-      /* Read Security EEPROM zone 1*/
-      xChannelGetMBXState( hChannel, (uint32_t*)&ulRecvPktCount, (uint32_t*)&ulSendPktCount);
-      printf("Channel Mailbox State: MaxSend = %u, Pending Receive = %u\r\n",
-             ulSendPktCount, ulRecvPktCount);
-      
-      /* Do a basic Packet Transfer */
-      if(CIFX_NO_ERROR != (lRet = xChannelPutPacket(hChannel, &tSendPkt, 10)))
-      {
-        printf("Error sending packet to device (0x%X)!\r\n", lRet);
-      } else
-      {
-        printf("Send Packet:\r\n");
-        DumpPacket(&tSendPkt);
-
-        if(CIFX_NO_ERROR != (lRet = xChannelGetPacket(hChannel, sizeof(tRecvPkt), &tRecvPkt, 20)) )
-        {
-          printf("Error getting packet from device!\r\n");
-        } else
-        {
-          printf("Received Packet:\r\n");
-          DumpPacket(&tRecvPkt);
-        }
-      }
-
-      sleep(1);
-      
-      printf("\nStart read/write IO-Data!\n");
+      /* Set Bus state on */
+      lRet = xChannelBusState(hChannel, CIFX_BUS_STATE_ON, &ulState, 1000);
+      if (CIFX_NO_ERROR != lRet)
+        printf("Error CIFX_BUS_STATE_ON, state %lu, error 0x%08X !\n", (long unsigned int)ulState, (unsigned int)lRet);
+      else
+        printf("CIFX_BUS_STATE_ON, state %lu !\n", (long unsigned int)ulState);
 
       /* Read and write I/O data (32Bytes). Output data will be incremented each cyle */
-      unsigned char abSendData[32] = {0};
-      unsigned char abRecvData[32] = {0};
+      unsigned char abSendData[2] = {0};
+      unsigned char abRecvData[20] = {0};
       unsigned long ulCycles       = 0;
       unsigned long ulState;
 
@@ -593,7 +569,9 @@ int32_t ChannelDemo()
 
       printf("IO Demo running <Hit any key to abort>:\n");
 
-      while(!kbhit())
+      uint8_t cycle_ = 5;
+      // while(!kbhit())
+      while(cycle_--)
       {
         ++ulCycles;
 
@@ -604,16 +582,14 @@ int32_t ChannelDemo()
           break;
         } else
         {
-#ifdef DEBUG
           printf("IORead Data:");
           DumpData(abRecvData, sizeof(abRecvData));
-#endif
-          memcpy(abSendData, abRecvData, sizeof(abRecvData));
+          // memcpy(abSendData, abRecvData, sizeof(abRecvData));
 
           /* On a CB-AB32 we will echo the input 8 buttons if one is pressed, otherwise a counter
              will be placed on output */
-          if(abRecvData[0] == 0)
-            abSendData[0] = (unsigned char)ulCycles;
+          // if(abRecvData[0] == 0)
+          //   abSendData[0] = 0;
 
           if(CIFX_NO_ERROR != (lRet = xChannelIOWrite(hChannel, 0, 0, sizeof(abSendData), abSendData, 10)))
           {
@@ -621,19 +597,164 @@ int32_t ChannelDemo()
             break;
           } else
           {
-#ifdef DEBUG
             printf("IOWrite Data:");
             DumpData(abSendData, sizeof(abSendData));
-#endif
           }
         }
       }
       printf("IODemo ended. Total cycles %lu\n", ulCycles);
+      sleep(5);
 
-      if(CIFX_NO_ERROR != (lRet = xChannelBusState(hChannel, CIFX_BUS_STATE_OFF, (uint32_t*)&ulState, 10000)))
+      // uint32_t    ulSendPktCount = 0;
+      // uint32_t    ulRecvPktCount = 0;
+      // CIFX_PACKET tSendPkt1       = {{0}};
+      // CIFX_PACKET tRecvPkt1       = {{0}};
+
+      // ECM_IF_SET_SLAVE_TARGET_STATE_REQ_T slave_stateSetReq = {{0}};
+      // slave_stateSetReq.tHead.ulCmd = ECM_IF_CMD_SET_SLAVE_TARGET_STATE_REQ;
+      // slave_stateSetReq.tHead.ulLen = 3;
+      // slave_stateSetReq.tHead.ulDest = 0x20;
+      // slave_stateSetReq.tData.usStationAddress = 0x100;
+      // slave_stateSetReq.tData.bTargetState = 0x08;
+
+      // memcpy(&tSendPkt1, &slave_stateSetReq, sizeof(slave_stateSetReq));
+
+      // if(CIFX_NO_ERROR != (lRet = xChannelPutPacket(hChannel, &tSendPkt1, 10)))
+      // {
+      //   printf("Slave state set failed, Error sending packet to device (0x%X)!\r\n", lRet);
+      // } else {
+      //   printf("Send Packet:\r\n");
+      //   DumpPacket(&tSendPkt1);
+
+      //   ECM_IF_SET_SLAVE_TARGET_STATE_CNF_T slave_stateSetCnf = {{0}};
+      //   if(CIFX_NO_ERROR != (lRet = xChannelGetPacket(hChannel, sizeof(slave_stateSetCnf), &tRecvPkt1, 200)) )
+      //   {
+      //   printf("Error getting state from slave (0x%X)!\r\n", lRet);
+
+      //   }
+      //   printf("Received Packet:\r\n");
+      //     DumpPacket(&tRecvPkt1);
+
+      // }
+
+      printf("\nStart put/get packet Demo!\n");
+
+      /* Read Security EEPROM zone 1*/
+      // xChannelGetMBXState( hChannel, (uint32_t*)&ulRecvPktCount, (uint32_t*)&ulSendPktCount);
+      // printf("Channel Mailbox State: MaxSend = %u, Pending Receive = %u\r\n",
+      //        ulSendPktCount, ulRecvPktCount);
+      CIFX_PACKET tSendPkt       = {{0}};
+      CIFX_PACKET tRecvPkt       = {{0}};
+
+      ECM_IF_COE_SDO_UPLOAD_REQ_T sdoReadReq = {{0}};
+      sdoReadReq.tHead.ulDest = 0x20;
+      sdoReadReq.tHead.ulSrc = 0;
+      sdoReadReq.tHead.ulDestId = 0;
+      sdoReadReq.tHead.ulSrcId = 0;
+      sdoReadReq.tHead.ulLen = 18;
+      sdoReadReq.tHead.ulId = 0;
+      sdoReadReq.tHead.ulSta = 0;
+      sdoReadReq.tHead.ulCmd = ECM_IF_CMD_COE_SDO_UPLOAD_REQ;
+      sdoReadReq.tHead.ulExt = 0;
+      sdoReadReq.tHead.ulRout = 0;
+
+      sdoReadReq.tData.usStationAddress = 0x100; //slaves_[slave]->getStationAddress();
+      sdoReadReq.tData.usTransportType = 0;
+      sdoReadReq.tData.usAoEPort = 0;
+      sdoReadReq.tData.usObjIndex = 0x6072;
+      sdoReadReq.tData.bSubIndex = 0x00;  // TODO: check DS402; 0 or 1?
+     
+      sdoReadReq.tData.fCompleteAccess = 0;
+      sdoReadReq.tData.ulTimeoutMs = 1000;
+      sdoReadReq.tData.ulMaxTotalBytes = 20;
+
+      // tSendPkt.tHeader = sdoReadReq.tHead;
+      // memcpy(&tSendPkt.abData, &sdoReadReq.tData, sizeof(sdoReadReq.tData));
+      memcpy(&tSendPkt, &sdoReadReq, sizeof(sdoReadReq));
+
+      /* Do a basic Packet Transfer */
+      if(CIFX_NO_ERROR != (lRet = xChannelPutPacket(hChannel, &tSendPkt, 10)))
       {
-        printf("Error setting Bus state lRet = 0x%08X!\r\n",(unsigned int)lRet);
+        printf("Error sending packet to device (0x%X)!\r\n", lRet);
+      } else
+      {
+        printf("Send Packet:\r\n");
+        DumpPacket(&tSendPkt);
+        
+        ECM_IF_COE_SDO_UPLOAD_CNF_T sdoReadCnf = {{0}};
+
+        if(CIFX_NO_ERROR != (lRet = xChannelGetPacket(hChannel, sizeof(sdoReadCnf), &tRecvPkt, 200)) )
+        {
+          printf("Error getting packet from device!\r\n");
+        } else
+        {
+          printf("Received Packet:\r\n");
+          DumpPacket(&tRecvPkt);
+        }
       }
+
+      sleep(1);
+      
+      printf("\nStart read/write IO-Data!\n");
+
+      // /* Read and write I/O data (32Bytes). Output data will be incremented each cyle */
+      // unsigned char abSendData[32] = {0};
+      // unsigned char abRecvData[32] = {0};
+      // unsigned long ulCycles       = 0;
+      // unsigned long ulState;
+
+//       if(CIFX_NO_ERROR != (lRet = xChannelBusState(hChannel, CIFX_BUS_STATE_ON,(uint32_t*) &ulState, 10000)))
+//       {
+//         printf("Error setting Bus state lRet = 0x%08X!\r\n",(unsigned int)lRet);
+        
+//          xChannelClose(hChannel);
+//          xDriverClose(hDriver);
+//          return lRet;
+//       }
+
+//       printf("IO Demo running <Hit any key to abort>:\n");
+
+//       while(!kbhit())
+//       {
+//         ++ulCycles;
+
+//         usleep(1 * 1000); /* Wait 1 ms so we can see the counter on the LEDs */
+//         if(CIFX_NO_ERROR != (lRet = xChannelIORead(hChannel, 0, 0, sizeof(abRecvData), abRecvData, 10)))
+//         {
+//           printf("Error reading IO Data area!\r\n");
+//           break;
+//         } else
+//         {
+// #ifdef DEBUG
+//           printf("IORead Data:");
+//           DumpData(abRecvData, sizeof(abRecvData));
+// #endif
+//           memcpy(abSendData, abRecvData, sizeof(abRecvData));
+
+//           /* On a CB-AB32 we will echo the input 8 buttons if one is pressed, otherwise a counter
+//              will be placed on output */
+//           if(abRecvData[0] == 0)
+//             abSendData[0] = (unsigned char)ulCycles;
+
+//           if(CIFX_NO_ERROR != (lRet = xChannelIOWrite(hChannel, 0, 0, sizeof(abSendData), abSendData, 10)))
+//           {
+//             printf("Error writing to IO Data area!\r\n");
+//             break;
+//           } else
+//           {
+// #ifdef DEBUG
+//             printf("IOWrite Data:");
+//             DumpData(abSendData, sizeof(abSendData));
+// #endif
+//           }
+//         }
+//       }
+//       printf("IODemo ended. Total cycles %lu\n", ulCycles);
+
+//       if(CIFX_NO_ERROR != (lRet = xChannelBusState(hChannel, CIFX_BUS_STATE_OFF, (uint32_t*)&ulState, 10000)))
+//       {
+//         printf("Error setting Bus state lRet = 0x%08X!\r\n",(unsigned int)lRet);
+//       }
 
 
       xChannelClose(hChannel);
@@ -945,8 +1066,11 @@ int main(int argc, char* argv[])
     .trace_level         = 255,
     .user_card_cnt       = 0,
     .user_cards          = NULL,
+    // .poll_schedpolicy    = 1,
+    // .poll_priority       = 30,
   };
 	
+
 #ifdef DEBUG
 	printf("%s() called\n", __FUNCTION__);
 #endif
@@ -957,26 +1081,26 @@ int main(int argc, char* argv[])
   if(CIFX_NO_ERROR == lRet)
   {
 
-    /* Display version of cifXRTXDrv and cifXToolkit */
-    DisplayDriverInformation();
+    // /* Display version of cifXRTXDrv and cifXToolkit */
+    // DisplayDriverInformation();
   
-    /* Demonstrate the board/channel enumeration */
-    EnumBoardDemo();
+    // /* Demonstrate the board/channel enumeration */
+    // EnumBoardDemo();
   
-    /* Demonstrate system channel functionality */
-    SysdeviceDemo();
+    // /* Demonstrate system channel functionality */
+    // SysdeviceDemo();
   
     /* Demonstrate communication channel functionality */
     ChannelDemo();
   
-    /* Demonstrate control/status block functionality */
-    BlockDemo();
+    // /* Demonstrate control/status block functionality */
+    // BlockDemo();
   
-    /* Demonstrate event handling */
-    TestEventHandling();
+    // /* Demonstrate event handling */
+    // TestEventHandling();
   
-    /* Demonstrate host/bus state functions */
-    StateDemo ();
+    // /* Demonstrate host/bus state functions */
+    // StateDemo ();
 
   }
 

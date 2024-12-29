@@ -1085,6 +1085,7 @@ int32_t cifXDriverInit(const struct CIFX_LINUX_INIT* init_params)
         fprintf( stderr, "cifXDriverInit: Could not create polling thread (pthread_create=%d)", ret);
         lRet = CIFX_DRV_INIT_STATE_ERROR;
       }
+      
       polling_thread_running = 1;
     }
 
